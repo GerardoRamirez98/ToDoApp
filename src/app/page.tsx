@@ -1,20 +1,18 @@
-"use client"; 
+"use client";
 // 👆 NECESARIO en Next.js App Router para usar Hooks (useState, useEffect)
 
 // ---------------------------------------------
 // IMPORTACIONES
 // ---------------------------------------------
 import { useState, useEffect } from "react";
+import { Task } from "@/types"; // tipo definido en src/types.ts
+import TaskList from "@/components/TaskList"; // lista de tareas
 
 // ---------------------------------------------
 // TIPADO (TypeScript)
 // Creamos un tipo `Task` para definir cómo luce una tarea
 // ---------------------------------------------
-type Task = {
-  id: number;
-  text: string;
-  completed: boolean;
-};
+// (moved to src/types.ts)
 
 // ---------------------------------------------
 // COMPONENTE PRINCIPAL (Home)
@@ -25,9 +23,9 @@ export default function Home() {
   // ESTADOS (useState)
   // ------------------------------
   const [tasks, setTasks] = useState<Task[]>([]); // lista de tareas
-  const [text, setText] = useState("");           // input para nueva tarea
+  const [text, setText] = useState(""); // input para nueva tarea
   const [editingId, setEditingId] = useState<number | null>(null); // id de la tarea en edición
-  const [editText, setEditText] = useState("");   // texto mientras editamos
+  const [editText, setEditText] = useState(""); // texto mientras editamos
 
   // ------------------------------
   // USEEFFECT → localStorage
@@ -64,14 +62,14 @@ export default function Home() {
 
   // 👉 Marcar tarea como completada
   const toggleTask = (id: number) => {
-    setTasks(tasks.map(t =>
-      t.id === id ? { ...t, completed: !t.completed } : t
-    ));
+    setTasks(
+      tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+    );
   };
 
   // 👉 Eliminar tarea
   const deleteTask = (id: number) => {
-    setTasks(tasks.filter(t => t.id !== id));
+    setTasks(tasks.filter((t) => t.id !== id));
   };
 
   // 👉 Iniciar edición
@@ -82,9 +80,7 @@ export default function Home() {
 
   // 👉 Guardar cambios de edición
   const saveEdit = (id: number) => {
-    setTasks(tasks.map(t =>
-      t.id === id ? { ...t, text: editText } : t
-    ));
+    setTasks(tasks.map((t) => (t.id === id ? { ...t, text: editText } : t)));
     setEditingId(null); // salimos del modo edición
     setEditText("");
   };
@@ -122,72 +118,17 @@ export default function Home() {
         </button>
       </div>
 
-      {/* --------------------------------------------- */}
-      {/* LISTA DE TAREAS */}
-      {/* --------------------------------------------- */}
-      <ul className="space-y-2">
-        {tasks.map(task => (
-          <li
-            key={task.id}
-            className="flex justify-between items-center bg-gray-600 p-2 rounded"
-          >
-            {editingId === task.id ? (
-              // ------------------------------
-              // MODO EDICIÓN
-              // ------------------------------
-              <div className="flex gap-2 w-full">
-                <input
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  className="flex-1 border p-1 rounded"
-                  autoFocus
-                  onKeyDown={(e) => e.key === "Enter" && saveEdit(task.id)}
-                />
-                <button
-                  onClick={() => saveEdit(task.id)}
-                  className="bg-green-500 text-white px-2 rounded"
-                >
-                  Guardar
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  className="bg-gray-400 text-white px-2 rounded"
-                >
-                  Cancelar
-                </button>
-              </div>
-            ) : (
-              // ------------------------------
-              // MODO NORMAL (texto + botones)
-              // ------------------------------
-              <>
-                <span
-                  onClick={() => toggleTask(task.id)}
-                  className={`cursor-pointer ${
-                    task.completed ? "line-through text-gray-500" : ""
-                  }`}
-                >
-                  {task.text}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startEditing(task.id, task.text)}
-                    className="text-blue-500 hover:underline"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deleteTask(task.id)}
-                    className="text-red-500 hover:underline"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+      <TaskList
+        tasks={tasks}
+        editingId={editingId}
+        editText={editText}
+        toggleTask={toggleTask}
+        deleteTask={deleteTask}
+        startEditing={startEditing}
+        saveEdit={saveEdit}
+        cancelEdit={cancelEdit}
+        setEditText={setEditText}
+      />
     </main>
   );
 }
