@@ -129,7 +129,7 @@ export default function Home() {
         {tasks.map(task => (
           <li
             key={task.id}
-            className="flex justify-between items-center bg-gray-100 p-2 rounded"
+            className="flex justify-between items-center bg-gray-600 p-2 rounded"
           >
             {editingId === task.id ? (
               // ------------------------------
