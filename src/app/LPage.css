@@ -1,0 +1,10 @@
+/* Fuerza que las horas del dropdown se vean negras */
+select option {
+  color: black;
+}
+
+/* Mantener la caja de input blanca */
+select,
+input[type="number"] {
+  color: white;
+}
