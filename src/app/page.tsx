@@ -9,7 +9,8 @@ import "./LPage.css"; // Para estilos extra
 
 export default function LPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(""); // título obligatorio
+  const [description, setDescription] = useState(""); // descripción opcional
 
   const now = new Date();
   const [dueDate, setDueDate] = useState<Date | null>(new Date());
@@ -23,6 +24,7 @@ export default function LPage() {
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
+  const [editDescription, setEditDescription] = useState(""); // 👈 para edición de descripción
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -46,19 +48,11 @@ export default function LPage() {
       .toString()
       .padStart(2, "0")}`;
 
-    const duplicate = tasks.find(
-      (t) =>
-        t.text === text &&
-        t.dueDate === dueDate.toISOString().slice(0, 10) &&
-        t.dueTime === dueTime
-    );
-    if (duplicate && !confirm("Esta tarea ya existe. ¿Desea agregarla igual?"))
-      return;
-
     const nowDate = new Date();
     const newTask: Task = {
       id: Date.now(),
       text,
+      description: description.trim() || "", // 👈 guardamos la descripción si hay
       completed: false,
       createdDate: nowDate.toISOString().slice(0, 10),
       createdTime: nowDate.toTimeString().slice(0, 5),
@@ -68,6 +62,7 @@ export default function LPage() {
 
     setTasks([...tasks, newTask]);
     setText("");
+    setDescription(""); // limpiamos descripción
     setDueDate(new Date());
     setDueHour(now.getHours() % 12 === 0 ? 12 : now.getHours() % 12);
     setDueMinute(Math.floor(now.getMinutes() / 15) * 15);
@@ -99,18 +94,26 @@ export default function LPage() {
   };
 
   const deleteTask = (id: number) => setTasks(tasks.filter((t) => t.id !== id));
-  const startEditing = (id: number, text: string) => {
+  const startEditing = (id: number, text: string, description: string = "") => {
     setEditingId(id);
     setEditText(text);
+    setEditDescription(description);
   };
   const saveEdit = (id: number) => {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, text: editText } : t)));
+    if (!editText.trim()) return; // no permitir guardar vacío el título
+    setTasks(
+      tasks.map((t) =>
+        t.id === id ? { ...t, text: editText, description: editDescription } : t
+      )
+    );
     setEditingId(null);
     setEditText("");
+    setEditDescription("");
   };
   const cancelEdit = () => {
     setEditingId(null);
     setEditText("");
+    setEditDescription("");
   };
 
   const pendingTasks = tasks
@@ -127,83 +130,79 @@ export default function LPage() {
       <h1 className="text-3xl font-bold mb-6">ToDo App 📝</h1>
 
       {/* Inputs de nueva tarea */}
-      <div className="flex gap-2 mb-4 items-end">
+      <div className="flex flex-col gap-2 mb-4">
         <input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Nueva tarea..."
-          className={`border p-2 rounded flex-1 ${
-            error ? "border-red-500" : "border-gray-300"
-          }`}
-        />
-
-        <DatePicker
-          selected={dueDate} // debe ser un Date o null
-          onChange={(date: Date | null) => setDueDate(date)} // acepta Date o null
-          minDate={new Date()}
-          dateFormat="yyyy-MM-dd"
+          placeholder="Título de la tarea"
           className={`border p-2 rounded ${
             error ? "border-red-500" : "border-gray-300"
           }`}
         />
 
-        {/* Hora (dropdown negro) */}
-        <select
-          value={dueHour}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (!isNaN(value)) setDueHour(value);
-          }}
-          className={`border p-2 rounded text-black ${
-            error ? "border-red-500" : "border-gray-300"
-          }`}
-        >
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-            <option key={h} value={h} className="text-black">
-              {h}
-            </option>
-          ))}
-        </select>
-
-        {/* Minutos */}
         <input
-          type="number"
-          min={0}
-          max={59}
-          value={dueMinute}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (!isNaN(value)) setDueMinute(value);
-          }}
-          className={`border p-2 rounded w-16 ${
-            error ? "border-red-500" : "border-gray-300"
-          }`}
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Descripción de la tarea (opcional)"
+          className="border p-2 rounded border-gray-300"
         />
 
-        {/* AM/PM */}
-        <select
-          value={dueAMPM}
-          onChange={(e) => setDueAMPM(e.target.value)}
-          className={`border p-2 rounded ${
-            error ? "border-red-500" : "border-gray-300"
-          }`}
-        >
-          <option value="AM">AM</option>
-          <option value="PM">PM</option>
-        </select>
+        {/* Controles de fecha y hora */}
+        <div className="flex gap-2 items-end flex-wrap">
+          <DatePicker
+            selected={dueDate}
+            onChange={(date: Date | null) => setDueDate(date)}
+            minDate={new Date()}
+            dateFormat="yyyy-MM-dd"
+            className={`border p-2 rounded ${
+              error ? "border-red-500" : "border-gray-300"
+            }`}
+          />
 
-        <button
-          onClick={addTask}
-          className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-600"
-        >
-          Agregar
-        </button>
+          <select
+            value={dueHour}
+            onChange={(e) => setDueHour(Number(e.target.value))}
+            className="border p-2 rounded text-black"
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+              <option key={h} value={h} className="text-black">
+                {h}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="number"
+            min={0}
+            max={59}
+            value={dueMinute}
+            onChange={(e) => setDueMinute(Number(e.target.value))}
+            className="border p-2 rounded w-16"
+          />
+
+          <select
+            value={dueAMPM}
+            onChange={(e) => setDueAMPM(e.target.value)}
+            className="border p-2 rounded"
+          >
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+
+          <button
+            onClick={addTask}
+            className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-600"
+          >
+            Agregar
+          </button>
+        </div>
       </div>
 
       {/* Pendientes / Completadas */}
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1">
           <h2 className="text-xl font-semibold mb-2">Pendientes</h2>
           <TaskList
@@ -216,6 +215,8 @@ export default function LPage() {
             saveEdit={saveEdit}
             cancelEdit={cancelEdit}
             setEditText={setEditText}
+            editDescription={editDescription} // 👈 pasamos descripción editable
+            setEditDescription={setEditDescription}
           />
         </div>
 
@@ -231,6 +232,8 @@ export default function LPage() {
             saveEdit={saveEdit}
             cancelEdit={cancelEdit}
             setEditText={setEditText}
+            editDescription={editDescription}
+            setEditDescription={setEditDescription}
           />
         </div>
       </div>

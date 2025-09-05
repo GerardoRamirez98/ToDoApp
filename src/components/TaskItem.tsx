@@ -6,24 +6,28 @@ type Props = {
   task: Task;
   editingId: number | null;
   editText: string;
+  editDescription: string;
   toggleTask: (id: number) => void;
   deleteTask: (id: number) => void;
-  startEditing: (id: number, text: string) => void;
+  startEditing: (id: number, text: string, description: string) => void;
   saveEdit: (id: number) => void;
   cancelEdit: () => void;
   setEditText: (text: string) => void;
+  setEditDescription: (text: string) => void;
 };
 
 export default function TaskItem({
   task,
   editingId,
   editText,
+  editDescription,
   toggleTask,
   deleteTask,
   startEditing,
   saveEdit,
   cancelEdit,
   setEditText,
+  setEditDescription,
 }: Props) {
   const now = new Date();
   const due = new Date(`${task.dueDate}T${task.dueTime}:00`);
@@ -37,33 +41,48 @@ export default function TaskItem({
 
   return (
     <li
-      className={`flex justify-between items-center p-2 rounded shadow-md ${bgColor}`}
+      className={`flex justify-between items-start p-2 rounded shadow-md ${bgColor}`}
     >
       {editingId === task.id ? (
-        <div className="flex gap-2 w-full">
+        <div className="flex flex-col gap-2 w-full">
+          {/* Input título obligatorio */}
           <input
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
-            className="flex-1 border p-1 rounded"
+            className="border p-1 rounded"
             autoFocus
             onKeyDown={(e) => e.key === "Enter" && saveEdit(task.id)}
+            placeholder="Título de la tarea"
           />
-          <button
-            onClick={() => saveEdit(task.id)}
-            className="bg-green-500 text-white px-2 rounded"
-          >
-            Guardar
-          </button>
-          <button
-            onClick={cancelEdit}
-            className="bg-gray-400 text-white px-2 rounded"
-          >
-            Cancelar
-          </button>
+
+          {/* Input descripción opcional */}
+          <textarea
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            className="border p-1 rounded"
+            placeholder="Descripción (opcional)"
+            rows={2}
+          />
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => saveEdit(task.id)}
+              className="bg-green-500 text-white px-2 rounded"
+            >
+              Guardar
+            </button>
+            <button
+              onClick={cancelEdit}
+              className="bg-gray-400 text-white px-2 rounded"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       ) : (
         <>
           <div className="flex flex-col">
+            {/* Título */}
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -79,6 +98,15 @@ export default function TaskItem({
                 {task.text}
               </span>
             </div>
+
+            {/* Descripción */}
+            {task.description && (
+              <span className="text-sm text-gray-200 ml-6">
+                {task.description}
+              </span>
+            )}
+
+            {/* Fechas */}
             <span className="text-xs text-gray-300 ml-6">
               Creada: {task.createdDate} {task.createdTime}
             </span>
@@ -94,7 +122,9 @@ export default function TaskItem({
 
           <div className="flex gap-2">
             <button
-              onClick={() => startEditing(task.id, task.text)}
+              onClick={() =>
+                startEditing(task.id, task.text, task.description || "")
+              }
               className="text-blue-400 hover:underline"
             >
               Editar
